@@ -188,13 +188,17 @@ pub struct Attachments2Data {
 
 #[post("/ciphers/admin", data = "<data>")]
 fn post_ciphers_admin(data: JsonUpcase<ShareCipherData>, headers: Headers, conn: DbConn, nt: Notify) -> JsonResult {
-    let data: ShareCipherData = data.into_inner().data;
+    if data.OrganizationId && CONFIG.personal_pw_allowed() {
+        let data: ShareCipherData = data.into_inner().data;
 
-    let mut cipher = Cipher::new(data.Cipher.Type, data.Cipher.Name.clone());
-    cipher.user_uuid = Some(headers.user.uuid.clone());
-    cipher.save(&conn)?;
+        let mut cipher = Cipher::new(data.Cipher.Type, data.Cipher.Name.clone());
+        cipher.user_uuid = Some(headers.user.uuid.clone());
+        cipher.save(&conn)?;
 
-    share_cipher_by_uuid(&cipher.uuid, data, &headers, &conn, &nt)
+        share_cipher_by_uuid(&cipher.uuid, data, &headers, &conn, &nt)
+    } else {
+        err!("Cannot create Personal secret")
+    }
 }
 
 #[post("/ciphers/create", data = "<data>")]

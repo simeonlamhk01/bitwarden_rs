@@ -257,6 +257,10 @@ make_config! {
 
         /// Allow all user to create organization
         create_org:             bool,   true,   def,    true;
+
+        /// Allow all user to create personal password
+        personal_pw_allowed:    bool,   true,   def,    true;
+
     },
 
     /// Advanced settings
