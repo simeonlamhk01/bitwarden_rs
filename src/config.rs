@@ -254,6 +254,9 @@ make_config! {
 
         /// Admin page token |> The token used to authenticate in this very same page. Changing it here won't deauthorize the current session
         admin_token:            Pass,   true,   option;
+
+        /// Allow all user to create organization
+        create_org:             bool,   true,   def,    true;
     },
 
     /// Advanced settings
