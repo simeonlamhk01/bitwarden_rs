@@ -74,7 +74,7 @@ struct NewCollectionData {
 
 #[post("/organizations", data = "<data>")]
 fn create_organization(headers: Headers, data: JsonUpcase<OrgData>, conn: DbConn) -> JsonResult {
-    if CONFIG.signups_allowed() {
+    if CONFIG.create_org() {
         let data: OrgData = data.into_inner().data;
 
         let org = Organization::new(data.Name, data.BillingEmail);

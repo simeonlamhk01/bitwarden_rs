@@ -188,17 +188,16 @@ pub struct Attachments2Data {
 
 #[post("/ciphers/admin", data = "<data>")]
 fn post_ciphers_admin(data: JsonUpcase<ShareCipherData>, headers: Headers, conn: DbConn, nt: Notify) -> JsonResult {
-    if data.OrganizationId && CONFIG.personal_pw_allowed() {
-        let data: ShareCipherData = data.into_inner().data;
+    let data: ShareCipherData = data.into_inner().data;
 
-        let mut cipher = Cipher::new(data.Cipher.Type, data.Cipher.Name.clone());
-        cipher.user_uuid = Some(headers.user.uuid.clone());
-        cipher.save(&conn)?;
-
-        share_cipher_by_uuid(&cipher.uuid, data, &headers, &conn, &nt)
-    } else {
+    if data.Cipher.OrganizationId == None && !CONFIG.personal_pw_allowed() {
         err!("Cannot create Personal secret")
     }
+    let mut cipher = Cipher::new(data.Cipher.Type, data.Cipher.Name.clone());
+    cipher.user_uuid = Some(headers.user.uuid.clone());
+    cipher.save(&conn)?;
+
+    share_cipher_by_uuid(&cipher.uuid, data, &headers, &conn, &nt)
 }
 
 #[post("/ciphers/create", data = "<data>")]
@@ -227,6 +226,9 @@ pub fn update_cipher_from_data(
 ) -> EmptyResult {
     if cipher.organization_uuid.is_some() && cipher.organization_uuid != data.OrganizationId {
         err!("Organization mismatch. Please resync the client before updating the cipher")
+    }
+    if data.OrganizationId == None && !CONFIG.personal_pw_allowed() {
+        err!("Cannot create Personal secret")
     }
 
     if let Some(org_id) = data.OrganizationId {
