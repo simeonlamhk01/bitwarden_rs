@@ -190,6 +190,9 @@ pub struct Attachments2Data {
 fn post_ciphers_admin(data: JsonUpcase<ShareCipherData>, headers: Headers, conn: DbConn, nt: Notify) -> JsonResult {
     let data: ShareCipherData = data.into_inner().data;
 
+    if data.Cipher.OrganizationId == None && !CONFIG.personal_pw_allowed() {
+        err!("Cannot create Personal secret")
+    }
     let mut cipher = Cipher::new(data.Cipher.Type, data.Cipher.Name.clone());
     cipher.user_uuid = Some(headers.user.uuid.clone());
     cipher.save(&conn)?;
@@ -223,6 +226,9 @@ pub fn update_cipher_from_data(
 ) -> EmptyResult {
     if cipher.organization_uuid.is_some() && cipher.organization_uuid != data.OrganizationId {
         err!("Organization mismatch. Please resync the client before updating the cipher")
+    }
+    if data.OrganizationId == None && !CONFIG.personal_pw_allowed() {
+        err!("Cannot create Personal secret")
     }
 
     if let Some(org_id) = data.OrganizationId {

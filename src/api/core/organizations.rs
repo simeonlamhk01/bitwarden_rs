@@ -74,22 +74,26 @@ struct NewCollectionData {
 
 #[post("/organizations", data = "<data>")]
 fn create_organization(headers: Headers, data: JsonUpcase<OrgData>, conn: DbConn) -> JsonResult {
-    let data: OrgData = data.into_inner().data;
+    if CONFIG.create_org() {
+        let data: OrgData = data.into_inner().data;
 
-    let org = Organization::new(data.Name, data.BillingEmail);
-    let mut user_org = UserOrganization::new(headers.user.uuid.clone(), org.uuid.clone());
-    let collection = Collection::new(org.uuid.clone(), data.CollectionName);
+        let org = Organization::new(data.Name, data.BillingEmail);
+        let mut user_org = UserOrganization::new(headers.user.uuid.clone(), org.uuid.clone());
+        let collection = Collection::new(org.uuid.clone(), data.CollectionName);
 
-    user_org.akey = data.Key;
-    user_org.access_all = true;
-    user_org.atype = UserOrgType::Owner as i32;
-    user_org.status = UserOrgStatus::Confirmed as i32;
+        user_org.akey = data.Key;
+        user_org.access_all = true;
+        user_org.atype = UserOrgType::Owner as i32;
+        user_org.status = UserOrgStatus::Confirmed as i32;
 
-    org.save(&conn)?;
-    user_org.save(&conn)?;
-    collection.save(&conn)?;
+        org.save(&conn)?;
+        user_org.save(&conn)?;
+        collection.save(&conn)?;
 
-    Ok(Json(org.to_json()))
+        Ok(Json(org.to_json()))
+    } else {
+        err!("Cannot create organizations")
+    }
 }
 
 #[delete("/organizations/<org_id>", data = "<data>")]
